@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.github.kuroronyancat.tacz_maid_balance_fix.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "maid_tacz_balance_fix.refmap.json",
+  "mixins": [
+    "GunShootTargetTaskMixin"
+  ],
+  "client": [
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  }
+}
