@@ -39,6 +39,8 @@ public abstract class GunShootTargetTaskMixin {
             "maid_tacz_balance_fix_burst_gun";
     @Unique private static final String maidTaczBalanceFix$targetKey =
             "maid_tacz_balance_fix_burst_target";
+    @Unique private static final String maidTaczBalanceFix$reloadPostDelayKey =
+            "maid_tacz_balance_fix_reload_post_delay";
 
     @Inject(
             method = "performGunAttack(Lcom/github/tartaricacid/touhoulittlemaid/entity/passive/EntityMaid;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;)I",
@@ -75,8 +77,22 @@ public abstract class GunShootTargetTaskMixin {
         if (!persistentData.getString(maidTaczBalanceFix$gunKey).equals(gunId.toString())
                 || !persistentData.getString(maidTaczBalanceFix$targetKey).equals(targetId)) {
             persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
+            persistentData.putInt(maidTaczBalanceFix$reloadPostDelayKey, 0);
             persistentData.putString(maidTaczBalanceFix$gunKey, gunId.toString());
             persistentData.putString(maidTaczBalanceFix$targetKey, targetId);
+        }
+
+        /*
+         * After an empty-magazine reload, wait about one additional second
+         * before attempting the next shot. The reload cooldown returned below
+         * accounts for the reload itself; this counter is consumed only when
+         * performGunAttack is called again after that cooldown.
+         */
+        int reloadPostDelay = persistentData.getInt(maidTaczBalanceFix$reloadPostDelayKey);
+        if (reloadPostDelay > 0) {
+            persistentData.putInt(maidTaczBalanceFix$reloadPostDelayKey, reloadPostDelay - 1);
+            cir.setReturnValue(1);
+            return;
         }
 
         double x = target.getX() - shooter.getX();
@@ -121,7 +137,7 @@ public abstract class GunShootTargetTaskMixin {
                 // Burst modification disabled: retain the original full-auto cadence.
                 // Clear any saved burst so re-enabling the feature cannot resume stale state.
                 persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
-                successfulShotCooldown = 2;
+                successfulShotCooldown = ModConfigHolder.COMMON.fullAutoShotDelayTicks.get();
             } else {
                 int remaining = persistentData.getInt(maidTaczBalanceFix$remainingKey);
                 if (remaining > 0) {
@@ -143,7 +159,7 @@ public abstract class GunShootTargetTaskMixin {
 
                 persistentData.putInt(maidTaczBalanceFix$remainingKey, remaining);
                 successfulShotCooldown = remaining > 0
-                        ? 2
+                        ? ModConfigHolder.COMMON.fullAutoShotDelayTicks.get()
                         : maidTaczBalanceFix$getRandomBurstIntervalTicks(shooter);
             }
         }
@@ -199,7 +215,13 @@ public abstract class GunShootTargetTaskMixin {
         }
 
         if (result == ShootResult.NO_AMMO) {
-            // Keep the current burst state during reload; continue it after reloading.
+            // Reset burst progress and add a one-second delay after the reload cooldown.
+            persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
+            int postReloadDelayTicks = Math.max(
+                    0,
+                    (int) Math.round(ModConfigHolder.COMMON.reloadPostCooldownSeconds.get() * 20.0)
+            );
+            persistentData.putInt(maidTaczBalanceFix$reloadPostDelayKey, postReloadDelayTicks);
             var availableInv = shooter.getAvailableInv(true);
             ItemsUtil.findStackSlot(availableInv, stack -> {
                 IAmmo ammo = IAmmo.getIAmmoOrNull(stack);
@@ -217,7 +239,7 @@ public abstract class GunShootTargetTaskMixin {
         }
 
         if (result == ShootResult.COOL_DOWN) {
-            cir.setReturnValue(2);
+            cir.setReturnValue(ModConfigHolder.COMMON.fullAutoShotDelayTicks.get());
             return;
         }
 
@@ -247,6 +269,7 @@ public abstract class GunShootTargetTaskMixin {
     private static void maidTaczBalanceFix$clearBurstState(EntityMaid shooter) {
         var data = shooter.getPersistentData();
         data.putInt(maidTaczBalanceFix$remainingKey, 0);
+        data.putInt(maidTaczBalanceFix$reloadPostDelayKey, 0);
         data.remove(maidTaczBalanceFix$gunKey);
         data.remove(maidTaczBalanceFix$targetKey);
     }

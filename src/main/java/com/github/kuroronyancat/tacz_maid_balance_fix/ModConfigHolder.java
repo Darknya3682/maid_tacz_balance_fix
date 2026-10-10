@@ -20,6 +20,8 @@ public class ModConfigHolder {
         public final ForgeConfigSpec.IntValue maxBurstCount;
         public final ForgeConfigSpec.DoubleValue minBurstIntervalSeconds;
         public final ForgeConfigSpec.DoubleValue maxBurstIntervalSeconds;
+        public final ForgeConfigSpec.IntValue fullAutoShotDelayTicks;
+        public final ForgeConfigSpec.DoubleValue reloadPostCooldownSeconds;
 
         public Common(ForgeConfigSpec.Builder builder) {
             builder.push("Balance Settings");
@@ -61,6 +63,22 @@ public class ModConfigHolder {
             maxBurstIntervalSeconds = builder
                     .comment("Maximum pause between full-auto bursts, in seconds.")
                     .defineInRange("maxBurstIntervalSeconds", 2.0, 0.0, 60.0);
+
+            fullAutoShotDelayTicks = builder
+                    .comment(
+                            "Delay between successful full-auto shots, in ticks.",
+                            "Used for shots within a burst and when burst modification is disabled.",
+                            "20 ticks = 1 second. Allowed range: 1 to 20."
+                    )
+                    .defineInRange("fullAutoShotDelayTicks", 1, 1, 20);
+
+            reloadPostCooldownSeconds = builder
+                    .comment(
+                            "Additional delay after the reload cooldown completes, in seconds.",
+                            "This delay starts after an empty-magazine reload has been initiated.",
+                            "Allowed range: 0.0 to 60.0 seconds."
+                    )
+                    .defineInRange("reloadPostCooldownSeconds", 0.5, 0.0, 60.0);
 
             builder.pop();
         }
