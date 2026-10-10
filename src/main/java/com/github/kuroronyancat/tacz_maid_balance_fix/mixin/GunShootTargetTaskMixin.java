@@ -69,6 +69,8 @@ public abstract class GunShootTargetTaskMixin {
         }
 
         CommonGunIndex gunIndex = optional.get();
+        String gunType = gunIndex.getType();
+        ModConfigHolder.CategorySettings categorySettings = ModConfigHolder.getSettingsForType(gunType);
         GunData gunData = gunIndex.getGunData();
         var persistentData = shooter.getPersistentData();
 
@@ -107,7 +109,7 @@ public abstract class GunShootTargetTaskMixin {
         float baseInaccuracy = baseInaccuracyValue != null ? Math.max(0.0F, baseInaccuracyValue) : 0.0F;
         float spread = 0.0F;
         if (ModConfigHolder.COMMON.enableInaccuracy.get()) {
-            float baseMultiplier = ModConfigHolder.COMMON.baseInaccuracyMultiplier.get().floatValue();
+            float baseMultiplier = categorySettings.inaccuracyMultiplier.get().floatValue();
             spread = baseInaccuracy * baseMultiplier;
         }
 
@@ -137,14 +139,14 @@ public abstract class GunShootTargetTaskMixin {
                 // Burst modification disabled: retain the original full-auto cadence.
                 // Clear any saved burst so re-enabling the feature cannot resume stale state.
                 persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
-                successfulShotCooldown = ModConfigHolder.COMMON.fullAutoShotDelayTicks.get();
+                successfulShotCooldown = categorySettings.fullAutoShotDelayTicks.get();
             } else {
                 int remaining = persistentData.getInt(maidTaczBalanceFix$remainingKey);
                 if (remaining > 0) {
                     remaining--;
                 } else {
-                    int minBurst = ModConfigHolder.COMMON.minBurstCount.get();
-                    int maxBurst = ModConfigHolder.COMMON.maxBurstCount.get();
+                    int minBurst = categorySettings.minBurstCount.get();
+                    int maxBurst = categorySettings.maxBurstCount.get();
                     if (minBurst > maxBurst) {
                         int swap = minBurst;
                         minBurst = maxBurst;
@@ -159,8 +161,8 @@ public abstract class GunShootTargetTaskMixin {
 
                 persistentData.putInt(maidTaczBalanceFix$remainingKey, remaining);
                 successfulShotCooldown = remaining > 0
-                        ? ModConfigHolder.COMMON.fullAutoShotDelayTicks.get()
-                        : maidTaczBalanceFix$getRandomBurstIntervalTicks(shooter);
+                        ? categorySettings.fullAutoShotDelayTicks.get()
+                        : maidTaczBalanceFix$getRandomBurstIntervalTicks(shooter, categorySettings);
             }
         }
 
@@ -219,7 +221,7 @@ public abstract class GunShootTargetTaskMixin {
             persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
             int postReloadDelayTicks = Math.max(
                     0,
-                    (int) Math.round(ModConfigHolder.COMMON.reloadPostCooldownSeconds.get() * 20.0)
+                    (int) Math.round(categorySettings.reloadPostCooldownSeconds.get() * 20.0)
             );
             persistentData.putInt(maidTaczBalanceFix$reloadPostDelayKey, postReloadDelayTicks);
             var availableInv = shooter.getAvailableInv(true);
@@ -239,7 +241,7 @@ public abstract class GunShootTargetTaskMixin {
         }
 
         if (result == ShootResult.COOL_DOWN) {
-            cir.setReturnValue(ModConfigHolder.COMMON.fullAutoShotDelayTicks.get());
+            cir.setReturnValue(categorySettings.fullAutoShotDelayTicks.get());
             return;
         }
 
@@ -248,9 +250,12 @@ public abstract class GunShootTargetTaskMixin {
     }
 
     @Unique
-    private static int maidTaczBalanceFix$getRandomBurstIntervalTicks(EntityMaid shooter) {
-        double minSeconds = ModConfigHolder.COMMON.minBurstIntervalSeconds.get();
-        double maxSeconds = ModConfigHolder.COMMON.maxBurstIntervalSeconds.get();
+    private static int maidTaczBalanceFix$getRandomBurstIntervalTicks(
+            EntityMaid shooter,
+            ModConfigHolder.CategorySettings categorySettings
+    ) {
+        double minSeconds = categorySettings.minBurstIntervalSeconds.get();
+        double maxSeconds = categorySettings.maxBurstIntervalSeconds.get();
 
         if (minSeconds > maxSeconds) {
             double swap = minSeconds;
