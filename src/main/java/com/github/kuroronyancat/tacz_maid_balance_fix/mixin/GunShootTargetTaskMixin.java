@@ -89,8 +89,11 @@ public abstract class GunShootTargetTaskMixin {
         // Add aim error based on the weapon's standing inaccuracy.
         Float baseInaccuracyValue = gunData.getInaccuracy().get(InaccuracyType.STAND);
         float baseInaccuracy = baseInaccuracyValue != null ? Math.max(0.0F, baseInaccuracyValue) : 0.0F;
-        float multiplier = ModConfigHolder.COMMON.inaccuracyMultiplier.get().floatValue();
-        float spread = baseInaccuracy * multiplier;
+        float spread = 0.0F;
+        if (ModConfigHolder.COMMON.enableInaccuracy.get()) {
+            float baseMultiplier = ModConfigHolder.COMMON.baseInaccuracyMultiplier.get().floatValue();
+            spread = baseInaccuracy * baseMultiplier;
+        }
 
         if (spread > 0.0F) {
             pitch += (shooter.getRandom().nextFloat() - 0.5F) * spread * 2.0F;
@@ -114,6 +117,11 @@ public abstract class GunShootTargetTaskMixin {
             if (fireMode == FireMode.SEMI || fireMode == FireMode.BURST) {
                 persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
                 successfulShotCooldown = 10 + shooter.getRandom().nextInt(5);
+            } else if (!ModConfigHolder.COMMON.enableBurst.get()) {
+                // Burst modification disabled: retain the original full-auto cadence.
+                // Clear any saved burst so re-enabling the feature cannot resume stale state.
+                persistentData.putInt(maidTaczBalanceFix$remainingKey, 0);
+                successfulShotCooldown = 2;
             } else {
                 int remaining = persistentData.getInt(maidTaczBalanceFix$remainingKey);
                 if (remaining > 0) {

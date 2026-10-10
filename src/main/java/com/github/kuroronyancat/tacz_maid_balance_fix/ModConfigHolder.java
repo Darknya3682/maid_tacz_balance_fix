@@ -13,7 +13,9 @@ public class ModConfigHolder {
     }
 
     public static class Common {
-        public final ForgeConfigSpec.DoubleValue inaccuracyMultiplier;
+        public final ForgeConfigSpec.BooleanValue enableBurst;
+        public final ForgeConfigSpec.BooleanValue enableInaccuracy;
+        public final ForgeConfigSpec.DoubleValue baseInaccuracyMultiplier;
         public final ForgeConfigSpec.IntValue minBurstCount;
         public final ForgeConfigSpec.IntValue maxBurstCount;
         public final ForgeConfigSpec.DoubleValue minBurstIntervalSeconds;
@@ -22,12 +24,27 @@ public class ModConfigHolder {
         public Common(ForgeConfigSpec.Builder builder) {
             builder.push("Balance Settings");
 
-            inaccuracyMultiplier = builder
+            enableBurst = builder
                     .comment(
-                            "Multiplier for additional maid aim error, based on the gun's standing inaccuracy.",
-                            "0.0 disables this extra aim error; maximum allowed value is 5.0."
+                            "Enable or disable the maid full-auto burst-fire modification.",
+                            "When disabled, full-auto weapons use the original continuous-fire cadence."
                     )
-                    .defineInRange("inaccuracyMultiplier", 1.0, 0.0, 5.0);
+                    .define("enableBurst", true);
+
+            enableInaccuracy = builder
+                    .comment(
+                            "Enable or disable the additional maid aiming inaccuracy added by this mod.",
+                            "When disabled, the mod does not add extra random aim error; TaCZ's own spread remains unchanged."
+                    )
+                    .define("enableInaccuracy", true);
+
+            baseInaccuracyMultiplier = builder
+                    .comment(
+                            "Global base multiplier for additional maid aiming inaccuracy.",
+                            "Final added aim error = TaCZ standing inaccuracy * this multiplier.",
+                            "Allowed range: 0.1 to 2.0."
+                    )
+                    .defineInRange("baseInaccuracyMultiplier", 0.5, 0.1, 2.0);
 
             minBurstCount = builder
                     .comment("Minimum successful shots in one full-auto burst.")
