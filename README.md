@@ -1,3 +1,4 @@
+### Maid-TaCZ Guns Balance Adjustments Fix
 A mod designed to address the game balance issues that arise when TouhouLittleMaid maids use TaCZ guns.
 
 This mod was created to prevent situations where maids obliterate enemies at lightning speed, rendering the player useless.
