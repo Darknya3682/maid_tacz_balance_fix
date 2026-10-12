@@ -1,3 +1,6 @@
+![CurseForge Downloads](https://img.shields.io/curseforge/dt/1736158?style=for-the-badge&logo=curseforge&label=CurseForge&color=f16436)
+![Modrinth Downloads](https://img.shields.io/modrinth/dt/7Yeha5C0?style=for-the-badge&logo=modrinth&label=Modrinth&color=22ff84)
+
 ### Maid-TaCZ Guns Balance Adjustments Fix
 A mod designed to address the game balance issues that arise when TouhouLittleMaid maids use TaCZ guns.
 
